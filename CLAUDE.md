@@ -141,7 +141,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ビルドツール・パッケージマネージャを使わない。確認は `open index.html` または `python -m http.server 8000`。
 - ファイル構成: `index.html`（ダークテーマ）/ `resume.html`（ライトテーマ・印刷対応）。
 - 色の変更は `:root` の CSS 変数（`--primary`, `--accent`, `--bg-dark` 等）経由。個別要素にカラーコードを直書きしない。
-- レスポンシブ: ブレークポイント 968px（タブレット）・768px（モバイル）。グリッドは `auto-fit, minmax()` でメディアクエリを最小化。フォントは `clamp()` で流体タイポgrafiを適用。
+- レスポンシブ: ブレークポイント 968px（タブレット）・768px（モバイル）。グリッドは `auto-fit, minmax()` でメディアクエリを最小化。フォントは `clamp()` で流体タイポグラフィを適用。
 - HTML はセマンティックタグ、CSS は BEM 風命名（`.section-header` 等）、JS は Vanilla のみ（外部ライブラリを追加しない）。画像に `alt`、外部リンクに `rel="noopener noreferrer"`、`lang="ja"`。
 - セクション追加時は Intersection Observer の `.observe()` 対象に追加し、ナビリンク・768px 表示・`resume.html` 反映を確認する。
 
