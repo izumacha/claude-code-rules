@@ -57,7 +57,7 @@ The master is consolidated from the `CLAUDE.md` files of:
 |---|---|
 | `profile-portfolio` | 静的 HTML/CSS/JS（GitHub Pages）|
 | `my-task-manager` | Python + tkinter（GUI）|
-| `my-first-ai-app` | Next.js 15 + Claude API |
+| `my-first-ai-app` | Next.js 16 + Claude API |
 | `helpdesk-hub` | Next.js 15 / Prisma / Auth.js v5 |
 | `incident-insight` | ASP.NET Core 8 MVC + EF Core 8 |
 | `AI-Docker-Environment` | Docker サンドボックス（bash, Linux）|
