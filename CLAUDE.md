@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 >
 > 集約元リポジトリ: `profile-portfolio` / `my-task-manager` / `my-first-ai-app` /
 > `helpdesk-hub` / `incident-insight` / `AI-Docker-Environment` /
-> `batch-schduler` / `Expense-Management-Rest-API`
+> `batch-scheduler` / `Expense-Management-Rest-API`
 
 ---
 
@@ -264,7 +264,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Linux 専用（iptables/ipset/cap_add 依存。macOS Docker Desktop 非対応）。スクリプトは Bash・先頭で `set -euo pipefail`、ログは stderr、インデント 4 スペース。
 - このリポジトリのコミットメッセージは英語・命令形・1 行要約（既存履歴に倣う。§12 の日本語コミット規約より優先する例外）。
 
-### G. batch-schduler（Java 21 / Maven, バッチ実行マネージャ）
+### G. batch-scheduler（Java 21 / Maven, バッチ実行マネージャ）
 
 - 正本は `docs/DESIGN.md`（アーキテクチャ・セキュリティモデル・将来拡張）。実装はここに従い、衝突したら先に設計を改訂してから実装を変更する。
 - バッチ定義ファイル（YAML）は **Makefile / CI パイプラインと同等の信頼入力**として扱う。一方で資源枯渇には防御する: bounded YAML parsing、出力キャプチャの上限、反復的（再帰でない）グラフアルゴリズム、state ディレクトリの安全性（runId 検証・シンボリックリンク非追従）。

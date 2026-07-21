@@ -62,7 +62,7 @@ The master is consolidated from the `CLAUDE.md` files of:
 | `helpdesk-hub` | Next.js 15 / Prisma / Auth.js v5 |
 | `incident-insight` | ASP.NET Core 8 MVC + EF Core 8 |
 | `AI-Docker-Environment` | Docker サンドボックス（bash, Linux）|
-| `batch-schduler` | Java 21 / Maven（バッチ実行マネージャ）|
+| `batch-scheduler` | Java 21 / Maven（バッチ実行マネージャ）|
 | `Expense-Management-Rest-API` | Java 21 / Spring Boot + C# .NET 10（REST API）|
 
 ※ `unmei-wo-hiraku` は private のため未収録。
