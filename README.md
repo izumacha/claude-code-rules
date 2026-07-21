@@ -40,12 +40,13 @@ This repo gathers the coding/agent conventions that were scattered across each p
 ## 原本の構成 / Structure of the master
 
 - **§0–§3**: 使い方とプロジェクト固有の章（プレースホルダ） / Usage and project-specific sections (placeholders).
-- **§4–§14**: 重複排除した共通規約 / Deduplicated shared conventions.
+- **§4–§15**: 重複排除した共通規約 / Deduplicated shared conventions.
   - 実装フロー（プランモード必須）/ Plan-mode-first workflow
   - 1 行ごとの初心者向けコメント / Beginner-friendly per-line comments
   - 正本優先 / Source-of-truth-first
   - アクセシビリティ（a11y）・パフォーマンス / Accessibility (a11y) and performance
   - セキュリティ・移植性・テスト・Git・PR/Codex・CI / Security, portability, testing, Git, PR/Codex, CI
+  - 見せ方（スクショ・デモ URL）/ Showcase (screenshots & demo URLs)
 - **付録 / Appendix**: リポジトリ別の固有ルール（共通規約と重複しない分のみ）/ Per-repository specific rules (only those not already in the shared section).
 
 ## 集約元リポジトリ / Source repositories
