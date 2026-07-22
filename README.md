@@ -45,7 +45,7 @@ This repo gathers the coding/agent conventions that were scattered across each p
   - 1 行ごとの初心者向けコメント / Beginner-friendly per-line comments
   - 正本優先 / Source-of-truth-first
   - アクセシビリティ（a11y）・パフォーマンス / Accessibility (a11y) and performance
-  - セキュリティ・移植性・テスト・Git・PR/Codex・CI / Security, portability, testing, Git, PR/Codex, CI
+  - セキュリティ・移植性・テスト・Git・PR・レビュー運用・CI / Security, portability, testing, Git, PR & review workflow, CI
   - 見せ方（スクショ・デモ URL）/ Showcase (screenshots & demo URLs)
 - **付録 / Appendix**: リポジトリ別の固有ルール（共通規約と重複しない分のみ）/ Per-repository specific rules (only those not already in the shared section).
 
