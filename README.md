@@ -78,10 +78,12 @@ python3 scripts/check_repo_lists.py   # 検査
 python3 -m unittest discover -s tests # 検査自体のテスト
 ```
 
-**この検査はスタック表記やバージョン番号の一致は見ない。** 書式や粒度が箇所ごとに異なるのが
-正常な状態（付録は「, GitHub Pages」・上の表は「（GitHub Pages）」、付録だけが `Auth.js v5` と
-版を書き、表だけが `React 19` を挙げる）で、機械的に揃えることを要求すると正しい記述を落とす
-方向の指示になるため。バージョン表記が各リポジトリの実装とずれていないかはレビューで確認する。
+**この検査はスタック表記やバージョン番号の一致は見ない。** 書式の約束が箇所ごとに異なるのが
+正常な状態（上の表は「静的 HTML/CSS/JS（GitHub Pages）」、付録は「静的 HTML/CSS/JS, GitHub Pages」。
+語尾も揃っておらず、表の「Docker サンドボックス（bash, Linux）」に対し付録は
+「Docker サンドボックス, bash, Linux 専用」）で、機械的に揃えることを要求すると正しい記述を
+落とす方向の指示になるため。バージョン表記が各リポジトリの実装とずれていないかはレビューで
+確認する。
 
 The repository list is hand-maintained in **three** places: the header list and the
 appendix headings in `CLAUDE.md`, plus the table above. Update all three together — CI

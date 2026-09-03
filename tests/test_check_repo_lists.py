@@ -63,6 +63,8 @@ VALID_CLAUDE = """# CLAUDE.md
 
 ---
 
+## 付録: リポジトリ別のルール（Appendix）
+
 ### A. alpha（静的 HTML）
 
 - 何らかの規約。
@@ -143,6 +145,56 @@ class ReadersTest(unittest.TestCase):
             self.checker.read_readme_repos(text), ["alpha", "beta", "gamma"]
         )
 
+    def test_readme_stops_after_the_first_table(self):
+        """同じ節の中に別の表が続いても、最初の表だけを読むこと。
+
+        対象節はファイル末尾まで続くため、節を限定するだけでは足りない。実際この節には
+        検査の使い方の説明が足してあり、そこに表を書く編集は自然に起こる。拾うと
+        「`用語` が CLAUDE.md 冒頭の列挙 / 付録に載っていません」という、実行しては
+        いけない指示を出す誤検知になる。
+        """
+        # 同じ節の中に、説明文と 2 つ目の表を足した入力を組み立てる
+        text = VALID_README + "\n用語の対応表:\n\n| 用語 | 意味 |\n|---|---|\n| `用語` | x |\n"
+        # 2 つ目の表の `用語` を拾わず、最初の表の 3 件だけを返すことを確かめる
+        self.assertEqual(
+            self.checker.read_readme_repos(text), ["alpha", "beta", "gamma"]
+        )
+
+    def test_header_marker_outside_blockquote_is_ignored(self):
+        """blockquote の外にある同じ語では読み取りを始めないこと。
+
+        本文に「現在の集約元リポジトリ: 8 件」のような文があると、そこで読み始めて
+        しまい、続く行が列挙でないため空の一覧を返す。fail-closed で落ちはするが
+        「書式を変えたなら読み取りも直せ」という誤った診断になり、実際には無傷の
+        blockquote を疑わせる。
+        """
+        # 本物の blockquote より前に、同じ語を含む本文の行を足した入力を組み立てる
+        text = VALID_CLAUDE.replace(
+            "# CLAUDE.md", "# CLAUDE.md\n\n現在の集約元リポジトリ: 3 件（詳細は付録）。"
+        )
+        # 本文の行に反応せず、blockquote の列挙 3 件を返すことを確かめる
+        self.assertEqual(
+            self.checker.read_header_repos(text), ["alpha", "beta", "gamma"]
+        )
+
+    def test_appendix_reads_only_the_appendix_section(self):
+        """付録の読み取りが「## 付録」以降に限定されること。
+
+        このファイルは新規リポジトリへコピーして §1〜§3 を埋めるテンプレートなので、
+        埋めた内容に同じ書式の見出しが現れうる。拾うと連番検査が
+        「実際 A B A B / 期待 A B C D」という原因の分からない失敗を出す。
+        """
+        # 付録より前の節に、同じ書式の見出しを足した入力を組み立てる
+        text = VALID_CLAUDE.replace(
+            "## 0. 使い方",
+            "## 3. アーキテクチャ\n\n### A. 入力レイヤ（バリデーション）\n\n- 説明。\n",
+        )
+        # 付録の外の見出しを拾わず、付録の 3 件だけを返すことを確かめる
+        self.assertEqual(
+            self.checker.read_appendix_repos(text),
+            [("A", "alpha"), ("B", "beta"), ("C", "gamma")],
+        )
+
 
 class DetectionTest(unittest.TestCase):
     """「壊した入力なら落ちる／正しい入力なら通る」を固定する。
@@ -203,8 +255,36 @@ class DetectionTest(unittest.TestCase):
         # README の表から gamma の行を取り除いた入力を作る
         broken = VALID_README.replace("| `gamma` | Java 21 / Maven（バッチ）|\n", "")
         # 欠落を検出して 1 を返すことを確かめる
-        code, _ = self.run_check(VALID_CLAUDE, broken)
+        code, output = self.run_check(VALID_CLAUDE, broken)
         self.assertEqual(code, 1)
+        # 欠けている名前と、**どこに足りないのか**まで名指しできていることを確かめる。
+        # 終了コードだけを見ると、報告先のラベルを取り違えても（たとえば冒頭の列挙と
+        # README の表を入れ替えても）通ってしまい、直す場所を誤って案内する
+        self.assertIn("`gamma`", output)
+        self.assertIn("README.md の表", output)
+        # 実際には揃っている箇所を「載っていない」と言わないことも確かめる
+        self.assertNotIn("CLAUDE.md 冒頭の列挙", output)
+        self.assertNotIn("CLAUDE.md 末尾の付録", output)
+
+    def test_missing_from_two_places_names_both(self):
+        """2 箇所に足りないときは 2 箇所とも名指しすること。
+
+        報告先を先頭 1 件に切り詰めても終了コードは 1 のままなので、
+        件数まで固定しないと「片方だけ直して再び落ちる」案内になる。
+        """
+        # README の表にだけ delta を足し、CLAUDE.md 側には足さない入力を作る
+        broken = VALID_README.replace(
+            "| `gamma` | Java 21 / Maven（バッチ）|",
+            "| `gamma` | Java 21 / Maven（バッチ）|\n| `delta` | 何か |",
+        )
+        # 欠落を検出して 1 を返すことを確かめる
+        code, output = self.run_check(VALID_CLAUDE, broken)
+        self.assertEqual(code, 1)
+        # CLAUDE.md 側の 2 箇所がどちらも名指しされることを確かめる
+        self.assertIn("CLAUDE.md 冒頭の列挙", output)
+        self.assertIn("CLAUDE.md 末尾の付録", output)
+        # 実際に載っている README を「載っていない」と言わないことも確かめる
+        self.assertNotIn("README.md の表", output)
 
     def test_missing_entry_in_header_fails(self):
         """冒頭の列挙から 1 件落とすと落ちること。"""
