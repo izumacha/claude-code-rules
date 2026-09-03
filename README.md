@@ -67,3 +67,16 @@ The master is consolidated from the `CLAUDE.md` files of:
 
 ※ `unmei-wo-hiraku` は private のため未収録。
 `unmei-wo-hiraku` is private and not included.
+
+この一覧は **CLAUDE.md 冒頭の「集約元リポジトリ」列挙・末尾の付録の見出し・上の表**の
+3 箇所に手書きで存在するため、リポジトリを増減するときは 3 箇所すべてを同時に更新する。
+取りこぼしは CI（`.github/workflows/ci.yml`）が `scripts/check_repo_lists.py` で検出する。
+ローカルでも同じコマンドで確認できる（Python 3 のみ、追加の依存は不要）。
+
+```bash
+python3 scripts/check_repo_lists.py
+```
+
+The repository list is hand-maintained in **three** places: the header list and the
+appendix headings in `CLAUDE.md`, plus the table above. Update all three together —
+CI runs `scripts/check_repo_lists.py` to catch any that were missed.

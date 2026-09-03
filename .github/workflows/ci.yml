@@ -1,0 +1,31 @@
+# CI: 原本テンプレートの一貫性を機械的に検査する（CLAUDE.md §14）。
+#
+# 本リポジトリはドキュメントのみでビルドもテストも無いため、検査対象は
+# 「同じ事実が複数箇所に書かれていて、片方だけ古くなる」という、このリポジトリが
+# そもそも解消しようとしている問題そのものに絞っている。
+name: CI
+
+# PR と main への push で走らせる（マージ後に壊れたことにも気付けるようにする）
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# 既定の権限を読み取りのみに落とす（§9 最小権限。書き込みを必要とするジョブは無い）
+permissions:
+  contents: read
+
+jobs:
+  repo-lists:
+    name: 集約元リポジトリ一覧の整合性
+    runs-on: ubuntu-latest
+    steps:
+      # リポジトリの中身を取得する。サプライチェーン対策として action は SHA で固定し、
+      # 読みやすさのためコメントにタグを添える（更新は Dependabot の github-actions が拾う）
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # CLAUDE.md 冒頭の列挙・付録の見出し・README の表の 3 か所を突き合わせる。
+      # ubuntu-latest には python3 が同梱されているため、セットアップは不要。
+      # 何を検査し、何を意図的に検査しないかはスクリプト冒頭の docstring に書いてある。
+      - name: 3 か所のリポジトリ一覧が一致することを検査
+        run: python3 scripts/check_repo_lists.py
