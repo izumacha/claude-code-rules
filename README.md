@@ -63,7 +63,7 @@ The master is consolidated from the `CLAUDE.md` files of:
 | `incident-insight` | ASP.NET Core 8 MVC + EF Core 9 |
 | `AI-Docker-Environment` | Docker サンドボックス（bash, Linux）|
 | `batch-scheduler` | Java 21 / Maven（バッチ実行マネージャ）|
-| `Expense-Management-Rest-API` | Java 21 / Spring Boot / PostgreSQL 16（REST API）|
+| `Expense-Management-Rest-API` | Java 21 / Spring Boot（REST API）|
 
 ※ `unmei-wo-hiraku` は private のため未収録。
 `unmei-wo-hiraku` is private and not included.
