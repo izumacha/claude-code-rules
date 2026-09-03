@@ -1,13 +1,11 @@
 # Dependabot 設定: 依存関係の既知脆弱性・更新を毎週チェックして PR を作成する
 # (CLAUDE.md §9「依存（サプライチェーン）を管理する」に基づく)
 #
-# 本リポジトリはドキュメント (CLAUDE.md 原本テンプレート) のみでパッケージ依存を
-# 持たないため、現時点で対象になるのは GitHub Actions のみ。ワークフローは未導入
-# だが、将来 .github/workflows/ を追加したときに自動で監視対象になるよう先行して
-# 設定しておく。注意: ワークフローが 1 つも無い間、Dependabot の定期実行は
-# 「dependency files が見つからない」旨のログを Insights > Dependency graph >
-# Dependabot に残す (PR は作られず実害はない)。気になる場合は最初のワークフロー
-# 追加までこのファイルの導入を保留してよい。
+# 本リポジトリはドキュメント (CLAUDE.md 原本テンプレート) と、その一貫性を検査する
+# Python スクリプトだけで構成されている。検査は標準ライブラリのみで動きパッケージ
+# 依存を持たないため、対象になるのは .github/workflows/ci.yml が使う GitHub Actions
+# のみ。この設定は #11 でワークフロー導入前に先行投入したもので、.github/workflows/ci.yml
+# を追加した時点から実際に監視対象を持っている。
 version: 2
 updates:
   # .github/workflows/ で使う GitHub Actions (将来追加分を含む)

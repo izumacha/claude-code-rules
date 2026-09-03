@@ -67,3 +67,26 @@ The master is consolidated from the `CLAUDE.md` files of:
 
 ※ `unmei-wo-hiraku` は private のため未収録。
 `unmei-wo-hiraku` is private and not included.
+
+この一覧は **CLAUDE.md 冒頭の「集約元リポジトリ」列挙・末尾の付録の見出し・上の表**の
+3 箇所に手書きで存在するため、リポジトリを増減するときは 3 箇所すべてを同時に更新する。
+取りこぼしは CI（`.github/workflows/ci.yml`）が `scripts/check_repo_lists.py` で検出する。
+ローカルでも同じコマンドで確認できる（Python 3 のみ、追加の依存は不要）。
+
+```bash
+python3 scripts/check_repo_lists.py   # 検査
+python3 -m unittest discover -s tests # 検査自体のテスト
+```
+
+**何を検査し、何をあえて検査しないかは同スクリプト冒頭の docstring が唯一の説明。**
+ここに書き写すと片方だけ古くなるため、内容は再掲しない。なお、この検査は上の表と付録が
+互いに食い違っていないかまでしか見ないので、**両方が揃って実装から古くなっている場合は
+検出できない**。そこはレビューで確認する。
+
+The repository list is hand-maintained in **three** places: the header list and the
+appendix headings in `CLAUDE.md`, plus the table above. Update all three together — CI
+runs `scripts/check_repo_lists.py`. **The single description of what it does and does not
+check is the docstring at the top of that script**; it is deliberately not restated here,
+since a second copy is what would go stale. Note that the check only compares the two
+lists against each other, so it cannot tell when both have drifted from the actual
+repositories — that stays a review concern.
