@@ -78,24 +78,46 @@ def read_header_repos(text: str) -> list[str]:
     started = False
     # ファイル全体を 1 行ずつ順番に見ていく
     for line in text.splitlines():
+        # blockquote の "> " を外した中身だけを見る（以降の判定はこの文字列に対して行う）
+        content = line.lstrip(">").strip()
         # まだ目印に出会っていない場合の処理
         if not started:
-            # 目印を含む行に来たら、この行から読み取りを始める
-            if HEADER_LIST_MARKER in line:
-                started = True
-            else:
-                # 目印より前の行は読み飛ばす
+            # 目印を含まない行は読み飛ばす
+            if HEADER_LIST_MARKER not in content:
                 continue
-        # 読み取り中に blockquote（先頭が "> "）でない行へ出たら列挙の終わり
+            # 目印の行に来たら、目印より後ろだけを列挙の本体として扱う
+            started = True
+            content = content.split(HEADER_LIST_MARKER, 1)[1]
+        # 2 行目以降が blockquote でなくなったら列挙の終わり
         elif not line.startswith(">"):
             break
-        # blockquote の続きでも、空の "> " だけの行に来たら列挙の終わりとみなす
-        elif not line.strip("> ").strip():
+        # この行が「列挙の続き」でなければ、そこで列挙は終わったものとして読むのをやめる。
+        # 単に blockquote が続く限り読むと、同じ段落に書かれた別の文に含まれる
+        # バッククォートまでリポジトリ名として拾ってしまう。たとえば README にある
+        # 「※ `unmei-wo-hiraku` は private のため未収録。」をこの blockquote へ
+        # 書き写すと、「意図的に載せていない private リポジトリを公開の README と
+        # 付録へ追加せよ」という、実行してはいけない指示を出す誤検知になる。
+        # §0 が「3 箇所を同時に更新する」と求めている以上その書き写しは自然に起こる。
+        if not is_enumeration_segment(content):
             break
         # この行に含まれるバッククォート囲みをすべてリポジトリ名として拾う
-        repos.extend(BACKTICKED_RE.findall(line))
+        repos.extend(BACKTICKED_RE.findall(content))
     # 見つかった順のまま返す（呼び出し側で集合にして比較する）
     return repos
+
+
+def is_enumeration_segment(content: str) -> bool:
+    """その行が「`名前` / `名前` / ...」という列挙の一部だけでできているかを判定する。
+
+    バッククォート囲みと区切りの `/` と空白を取り除いて何も残らなければ列挙の続きとみなす。
+    句点や説明文が混じっていれば、そこから先は列挙ではないと判断する。
+    """
+    # バッククォート囲みをすべて取り除く（中身が何であっても 1 つの塊として消す）
+    remainder = BACKTICKED_RE.sub("", content)
+    # 残りから区切りの / と空白を取り除く
+    remainder = remainder.replace("/", "").strip()
+    # 何も残らなければ列挙の続き、何か残れば別の文が始まっている
+    return not remainder
 
 
 def read_appendix_repos(text: str) -> list[tuple[str, str]]:
@@ -171,18 +193,22 @@ def main() -> int:
         # 付録は (記号, 名前) の組で持っているので、比較用に名前だけを取り出す
         appendix_names = [name for _, name in appendix]
 
-        # 3 か所を集合にして、どこに何が足りない／余分かを調べる
-        sets = {
-            "CLAUDE.md 冒頭の列挙": set(header),
-            "CLAUDE.md 末尾の付録": set(appendix_names),
-            "README.md の表": set(readme),
-        }
+        # 「どこに何が書かれているか」を 1 か所だけで定義する。
+        # 以降の検査（欠落と重複）はどちらもここから導く。箇所の呼び名を 2 度書くと、
+        # 表記を直したときに片方だけ残り、同じ実行の中で 1 つの場所が 2 通りの名前で
+        # 報告されてしまう（このリポジトリが無くそうとしている「写し」そのもの）。
+        sources: list[tuple[str, list[str]]] = [
+            ("CLAUDE.md 冒頭の列挙", header),
+            ("CLAUDE.md 末尾の付録", appendix_names),
+            ("README.md の表", readme),
+        ]
+
         # 3 か所のいずれかに 1 度でも現れた名前をすべて集める
-        union: set[str] = set().union(*sets.values())
+        union: set[str] = set().union(*(set(names) for _, names in sources))
         # 名前ごとに「どこに載っていないか」を調べる
         for name in sorted(union):
             # その名前を載せていない箇所を列挙する
-            missing = [where for where, names in sets.items() if name not in names]
+            missing = [where for where, names in sources if name not in names]
             # 1 か所でも欠けていれば、どこに足りないのかを添えて報告する
             if missing:
                 problems.append(
@@ -191,11 +217,7 @@ def main() -> int:
                 )
 
         # 同じ名前を 2 回書いていないかを、箇所ごとに調べる
-        for where, names in (
-            ("CLAUDE.md 冒頭の列挙", header),
-            ("CLAUDE.md 末尾の付録", appendix_names),
-            ("README.md の表", readme),
-        ):
+        for where, names in sources:
             # 重複している名前だけを抜き出す（集合にすると件数が減ることを利用する）
             duplicates = sorted({n for n in names if names.count(n) > 1})
             # 重複があれば、どこで何が重複しているかを報告する

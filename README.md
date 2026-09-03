@@ -70,13 +70,22 @@ The master is consolidated from the `CLAUDE.md` files of:
 
 この一覧は **CLAUDE.md 冒頭の「集約元リポジトリ」列挙・末尾の付録の見出し・上の表**の
 3 箇所に手書きで存在するため、リポジトリを増減するときは 3 箇所すべてを同時に更新する。
-取りこぼしは CI（`.github/workflows/ci.yml`）が `scripts/check_repo_lists.py` で検出する。
-ローカルでも同じコマンドで確認できる（Python 3 のみ、追加の依存は不要）。
+**リポジトリ名の載せ忘れ**は CI（`.github/workflows/ci.yml`）が `scripts/check_repo_lists.py` で
+検出する。ローカルでも同じコマンドで確認できる（Python 3 のみ、追加の依存は不要）。
 
 ```bash
-python3 scripts/check_repo_lists.py
+python3 scripts/check_repo_lists.py   # 検査
+python3 -m unittest discover -s tests # 検査自体のテスト
 ```
 
+**この検査はスタック表記やバージョン番号の一致は見ない。** 書式や粒度が箇所ごとに異なるのが
+正常な状態（付録は「, GitHub Pages」・上の表は「（GitHub Pages）」、付録だけが `Auth.js v5` と
+版を書き、表だけが `React 19` を挙げる）で、機械的に揃えることを要求すると正しい記述を落とす
+方向の指示になるため。バージョン表記が各リポジトリの実装とずれていないかはレビューで確認する。
+
 The repository list is hand-maintained in **three** places: the header list and the
-appendix headings in `CLAUDE.md`, plus the table above. Update all three together —
-CI runs `scripts/check_repo_lists.py` to catch any that were missed.
+appendix headings in `CLAUDE.md`, plus the table above. Update all three together — CI
+runs `scripts/check_repo_lists.py`, which catches a repository **missing from one of the
+three lists**. It deliberately does *not* compare stack strings or version numbers: the
+wording and level of detail legitimately differ per location, so demanding they match
+would flag correct text. Version accuracy against each repository stays a review concern.
