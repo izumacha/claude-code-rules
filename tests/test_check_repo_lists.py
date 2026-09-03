@@ -129,8 +129,12 @@ class ReadersTest(unittest.TestCase):
         """付録の見出しから記号と名前の組を順に読めること。"""
         # 見出し記号と名前が想定どおりに取り出せることを確かめる
         self.assertEqual(
-            self.checker.read_appendix_repos(VALID_CLAUDE),
-            [("A", "alpha"), ("B", "beta"), ("C", "gamma")],
+            self.checker.read_appendix_entries(VALID_CLAUDE),
+            [
+                ("A", "alpha", "静的 HTML"),
+                ("B", "beta", "Python + tkinter, GUI"),
+                ("C", "gamma", "Java 21 / Maven"),
+            ],
         )
 
     def test_readme_reads_only_the_target_section(self):
@@ -142,7 +146,8 @@ class ReadersTest(unittest.TestCase):
         text = VALID_README + "\n## 別の表\n\n| 項目 | 値 |\n|---|---|\n| `noise` | x |\n"
         # 別の節の `noise` を拾わず、対象節の 3 件だけを返すことを確かめる
         self.assertEqual(
-            self.checker.read_readme_repos(text), ["alpha", "beta", "gamma"]
+            [name for name, _ in self.checker.read_readme_entries(text)],
+            ["alpha", "beta", "gamma"],
         )
 
     def test_readme_stops_after_the_first_table(self):
@@ -157,7 +162,53 @@ class ReadersTest(unittest.TestCase):
         text = VALID_README + "\n用語の対応表:\n\n| 用語 | 意味 |\n|---|---|\n| `用語` | x |\n"
         # 2 つ目の表の `用語` を拾わず、最初の表の 3 件だけを返すことを確かめる
         self.assertEqual(
-            self.checker.read_readme_repos(text), ["alpha", "beta", "gamma"]
+            [name for name, _ in self.checker.read_readme_entries(text)],
+            ["alpha", "beta", "gamma"],
+        )
+
+    def test_header_stops_at_prose_on_the_next_line(self):
+        """空行を挟まずに別の文が続く場合も、その中のバッククォートを拾わないこと。
+
+        空行での打ち切りだけに頼ると、列挙の直後の行に注記を書いた場合をすり抜ける。
+        """
+        # 空行を挟まずに注記を続けた入力を組み立てる
+        text = VALID_CLAUDE.replace(
+            "> `gamma`", "> `gamma`\n> ※ `delta` は private のため未収録。"
+        )
+        # 注記の中の `delta` を拾わず、列挙の 3 件だけを返すことを確かめる
+        self.assertEqual(
+            self.checker.read_header_repos(text), ["alpha", "beta", "gamma"]
+        )
+
+    def test_header_reads_lazy_continuation_without_marker(self):
+        """列挙の続きが `>` なしで書かれていても読めること。
+
+        Markdown では blockquote の続きを `>` なしで書ける（lazy continuation）。
+        表示は同じなのに読み取りだけが途中で止まると、画面に見えているリポジトリを
+        「載っていません」と報告してしまう。
+        """
+        # 2 行目の `>` を外した入力を組み立てる
+        text = VALID_CLAUDE.replace("> `gamma`", "`gamma`")
+        # `>` の有無にかかわらず 3 件すべてを読めることを確かめる
+        self.assertEqual(
+            self.checker.read_header_repos(text), ["alpha", "beta", "gamma"]
+        )
+
+    def test_readme_row_without_backticks_does_not_swallow_later_rows(self):
+        """バッククォートを書き忘れた行があっても、後続の行を読み飛ばさないこと。
+
+        打ち切りの条件を「パターンに一致しない行」にすると、1 行の書き忘れで以降が
+        すべて読まれず、実際には表に載っているリポジトリまで「載っていません」と
+        報告する。その指示に従うと行が二重になり、今度は重複検査で落ちる。
+        """
+        # 2 行目のバッククォートだけを外した入力を組み立てる
+        text = VALID_README.replace(
+            "| `beta` | Python + tkinter（GUI）|", "| beta | Python + tkinter（GUI）|"
+        )
+        # 書き忘れた行だけが落ち、その後ろの gamma は読めていることを確かめる
+        self.assertEqual(
+            [name for name, _ in self.checker.read_readme_entries(text)],
+            ["alpha", "gamma"],
         )
 
     def test_header_marker_outside_blockquote_is_ignored(self):
@@ -191,8 +242,12 @@ class ReadersTest(unittest.TestCase):
         )
         # 付録の外の見出しを拾わず、付録の 3 件だけを返すことを確かめる
         self.assertEqual(
-            self.checker.read_appendix_repos(text),
-            [("A", "alpha"), ("B", "beta"), ("C", "gamma")],
+            self.checker.read_appendix_entries(text),
+            [
+                ("A", "alpha", "静的 HTML"),
+                ("B", "beta", "Python + tkinter, GUI"),
+                ("C", "gamma", "Java 21 / Maven"),
+            ],
         )
 
 
@@ -310,8 +365,12 @@ class DetectionTest(unittest.TestCase):
             "| `beta` | Python + tkinter（GUI）|\n| `beta` | Python + tkinter（GUI）|",
         )
         # 重複を検出して 1 を返すことを確かめる
-        code, _ = self.run_check(VALID_CLAUDE, broken)
+        code, output = self.run_check(VALID_CLAUDE, broken)
         self.assertEqual(code, 1)
+        # 重複として報告されることまで確かめる。終了コードだけを見ると、重複検査を
+        # 消しても並び順の検査が別の理由で 1 を返すため、素通りしてしまう
+        self.assertIn("複数回", output)
+        self.assertIn("`beta`", output)
 
     def test_non_sequential_appendix_letter_fails(self):
         """付録の見出し記号が連番から外れると落ちること。"""
@@ -335,6 +394,104 @@ class DetectionTest(unittest.TestCase):
         # 「欠落が 8 件」ではなく、書式が読めなくなった旨の案内が出ることまで確かめる。
         # ここを見ないと、専用の分岐を消しても（欠落として報告されるため）1 のまま通る。
         self.assertIn("読み取れませんでした", output)
+
+    def test_version_drift_between_readme_and_appendix_fails(self):
+        """README の表と付録でバージョン番号が食い違うと落ちること。
+
+        #14（Next.js 15 → 16）と #15（EF Core 8 → 9）で実際に起きたずれがこれ。
+        句読点や語尾の書式差は数値を含まないので、スタック表記そのものを比べなくても
+        数値の集合だけで検出できる。
+        """
+        # 付録が「Java 21」のまま、README の表だけを「Java 17」に変えた入力を作る
+        broken = VALID_README.replace(
+            "| `gamma` | Java 21 / Maven（バッチ）|",
+            "| `gamma` | Java 17 / Maven（バッチ）|",
+        )
+        # ずれを検出して 1 を返すことを確かめる
+        code, output = self.run_check(VALID_CLAUDE, broken)
+        self.assertEqual(code, 1)
+        # どのリポジトリのどの表記が食い違っているかを示すことを確かめる
+        self.assertIn("`gamma`", output)
+        self.assertIn("バージョン表記", output)
+
+    def test_extra_version_only_in_readme_fails(self):
+        """README にだけ余分な版が書かれている場合も落ちること。
+
+        #15 が削除した実在しない「+ C# .NET 10」がこの形（付録には無い数値が
+        README にだけある）だった。
+        """
+        # README の表にだけ、付録に無い版を足した入力を作る
+        broken = VALID_README.replace(
+            "| `beta` | Python + tkinter（GUI）|",
+            "| `beta` | Python + tkinter（GUI）+ C# .NET 10 |",
+        )
+        # ずれを検出して 1 を返すことを確かめる
+        code, output = self.run_check(VALID_CLAUDE, broken)
+        self.assertEqual(code, 1)
+        # 対象のリポジトリ名が示されることを確かめる
+        self.assertIn("`beta`", output)
+
+    def test_formatting_difference_alone_does_not_fail(self):
+        """句読点や語尾だけが違う場合は落ちないこと（誤検知しないこと）。
+
+        README の「（GitHub Pages）」対 付録の「, GitHub Pages」、README の
+        「（bash, Linux）」対 付録の「, bash, Linux 専用」のような差は正常な状態。
+        ここで落とすと、正しい記述を直せという指示になる。
+        """
+        # 語尾だけを変えた（数値は同じ）入力を作る
+        readme = VALID_README.replace(
+            "| `beta` | Python + tkinter（GUI）|",
+            "| `beta` | Python + tkinter（GUI・デスクトップ）|",
+        )
+        # 書式の差だけでは問題として報告しないことを確かめる
+        code, _ = self.run_check(VALID_CLAUDE, readme)
+        self.assertEqual(code, 0)
+
+    def test_order_mismatch_fails(self):
+        """3 箇所の並び順がずれると落ちること。
+
+        付録は A, B, C... と記号を振り本文がその記号で相互参照するため、並びが
+        ずれると読み手が別のリポジトリの説明にたどり着く。
+        """
+        # README の表で 2 行目と 3 行目を入れ替えた入力を作る
+        broken = VALID_README.replace(
+            "| `beta` | Python + tkinter（GUI）|\n| `gamma` | Java 21 / Maven（バッチ）|",
+            "| `gamma` | Java 21 / Maven（バッチ）|\n| `beta` | Python + tkinter（GUI）|",
+        )
+        # 並びのずれを検出して 1 を返すことを確かめる
+        code, output = self.run_check(VALID_CLAUDE, broken)
+        self.assertEqual(code, 1)
+        # 並びの問題であることが分かる文言が出ることを確かめる
+        self.assertIn("並び", output)
+
+    def test_more_than_26_entries_reports_the_letter_limit(self):
+        """付録が 26 件を超えたら、連番の乱れではなく上限の超過として報告すること。
+
+        A〜Z を使い切ると連番を作れない。そのまま連番検査に掛けると
+        「付録に載っていません」という、既に書いてある見出しを足せという
+        誤った案内になる。
+        """
+        # 27 件のリポジトリ名を用意する
+        names = [f"repo{i:02d}" for i in range(27)]
+        # 冒頭の列挙・付録・README の 3 箇所を 27 件で組み立てる
+        claude = (
+            "# CLAUDE.md\n\n> 集約元リポジトリ: "
+            + " / ".join(f"`{n}`" for n in names)
+            + "\n\n## 付録: リポジトリ別のルール（Appendix）\n\n"
+            + "".join(
+                f"### {chr(ord('A') + i % 26)}. {n}（スタック）\n\n- 規約。\n\n"
+                for i, n in enumerate(names)
+            )
+        )
+        readme = (
+            "# README\n\n## 集約元リポジトリ\n\n| リポジトリ | スタック |\n|---|---|\n"
+            + "".join(f"| `{n}` | スタック |\n" for n in names)
+        )
+        # 上限の超過として 1 を返すことを確かめる
+        code, output = self.run_check(claude, readme)
+        self.assertEqual(code, 1)
+        # 連番の乱れではなく、記号を使い切った旨を伝えることを確かめる
+        self.assertIn("A〜Z", output)
 
     def test_unreadable_appendix_fails_closed(self):
         """付録の見出しを読み取れなくなったら fail-closed で落ちること。"""

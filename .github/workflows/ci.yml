@@ -27,7 +27,7 @@ jobs:
       # CLAUDE.md 冒頭の列挙・付録の見出し・README の表の 3 か所を突き合わせる。
       # ubuntu-latest には python3 が同梱されているため、セットアップは不要。
       # 何を検査し、何を意図的に検査しないかはスクリプト冒頭の docstring に書いてある。
-      - name: 3 か所のリポジトリ一覧が一致することを検査
+      - name: 集約元リポジトリ一覧の整合性を検査
         run: python3 scripts/check_repo_lists.py
 
       # 検査スクリプト自身のテスト。これが無いと、検査の中身を消しても実ファイルに

@@ -70,24 +70,23 @@ The master is consolidated from the `CLAUDE.md` files of:
 
 この一覧は **CLAUDE.md 冒頭の「集約元リポジトリ」列挙・末尾の付録の見出し・上の表**の
 3 箇所に手書きで存在するため、リポジトリを増減するときは 3 箇所すべてを同時に更新する。
-**リポジトリ名の載せ忘れ**は CI（`.github/workflows/ci.yml`）が `scripts/check_repo_lists.py` で
-検出する。ローカルでも同じコマンドで確認できる（Python 3 のみ、追加の依存は不要）。
+取りこぼしは CI（`.github/workflows/ci.yml`）が `scripts/check_repo_lists.py` で検出する。
+ローカルでも同じコマンドで確認できる（Python 3 のみ、追加の依存は不要）。
 
 ```bash
 python3 scripts/check_repo_lists.py   # 検査
 python3 -m unittest discover -s tests # 検査自体のテスト
 ```
 
-**この検査はスタック表記やバージョン番号の一致は見ない。** 書式の約束が箇所ごとに異なるのが
-正常な状態（上の表は「静的 HTML/CSS/JS（GitHub Pages）」、付録は「静的 HTML/CSS/JS, GitHub Pages」。
-語尾も揃っておらず、表の「Docker サンドボックス（bash, Linux）」に対し付録は
-「Docker サンドボックス, bash, Linux 専用」）で、機械的に揃えることを要求すると正しい記述を
-落とす方向の指示になるため。バージョン表記が各リポジトリの実装とずれていないかはレビューで
-確認する。
+**何を検査し、何をあえて検査しないかは同スクリプト冒頭の docstring が唯一の説明。**
+ここに書き写すと片方だけ古くなるため、内容は再掲しない。なお、この検査は上の表と付録が
+互いに食い違っていないかまでしか見ないので、**両方が揃って実装から古くなっている場合は
+検出できない**。そこはレビューで確認する。
 
 The repository list is hand-maintained in **three** places: the header list and the
 appendix headings in `CLAUDE.md`, plus the table above. Update all three together — CI
-runs `scripts/check_repo_lists.py`, which catches a repository **missing from one of the
-three lists**. It deliberately does *not* compare stack strings or version numbers: the
-wording and level of detail legitimately differ per location, so demanding they match
-would flag correct text. Version accuracy against each repository stays a review concern.
+runs `scripts/check_repo_lists.py`. **The single description of what it does and does not
+check is the docstring at the top of that script**; it is deliberately not restated here,
+since a second copy is what would go stale. Note that the check only compares the two
+lists against each other, so it cannot tell when both have drifted from the actual
+repositories — that stays a review concern.

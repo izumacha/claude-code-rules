@@ -4,8 +4,8 @@
 # 本リポジトリはドキュメント (CLAUDE.md 原本テンプレート) と、その一貫性を検査する
 # Python スクリプトだけで構成されている。検査は標準ライブラリのみで動きパッケージ
 # 依存を持たないため、対象になるのは .github/workflows/ci.yml が使う GitHub Actions
-# のみ。この設定は #11 でワークフロー導入前に先行投入し、#16 で ci.yml を追加した
-# 時点で実際に監視対象を持つようになった。
+# のみ。この設定は #11 でワークフロー導入前に先行投入したもので、.github/workflows/ci.yml
+# を追加した時点から実際に監視対象を持っている。
 version: 2
 updates:
   # .github/workflows/ で使う GitHub Actions (将来追加分を含む)
