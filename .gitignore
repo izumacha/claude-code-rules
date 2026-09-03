@@ -1,0 +1,6 @@
+# Python がモジュールを import したときに生成するバイトコードキャッシュ。
+# scripts/check_repo_lists.py を単体で動かす分には作られないが、
+# 検査内容を確かめるためにテストから import すると scripts/__pycache__/ が残る。
+# 生成物なのでコミットしない。
+__pycache__/
+*.py[cod]
