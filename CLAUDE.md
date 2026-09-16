@@ -286,7 +286,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 正本は `docs/spec.md`（ユースケース・ER 図・API 一覧）と `docs/roadmap.md`（8 Step のロードマップと受け入れ基準）。実装と衝突したら先に文書を改訂してから実装を変える。設計判断は `docs/adr/` に ADR として残す。
 - **各 Step の受け入れ基準は `npm run gate:stepN` として自動化し、`main` でゲートが緑になってから次 Step のブランチを切る。** 基準を緩める変更は `docs/roadmap.md` と該当 ADR を同じ PR で更新する（テスト側だけを書き換えない）。Step の順序（0→1→…→7）を入れ替えず、後 Step の機能を前 Step に混ぜない。
 - REST API は `openapi/openapi.yaml`（OpenAPI 3.1）が契約の正本。`npm run gen` が `src/generated/openapi.d.ts` に型を生成し、`src/lib/api-types.ts` がアプリ側の名前で再公開する。新しいエンドポイントは「定義 → `gen` → 実装 → API テスト」の順で作る。
-- マルチテナントは行スコープ（全テーブルに `tenantId`）。Server Action / Route Handler は冒頭で `tenantId` を `where` に必ず差し込み、他テナントの資源は 404 で隠す。
+- マルチテナントは行スコープ（全テーブルに `tenantId`、ADR-0002）。他テナントの資源は 404 で隠す（403 だと存在が漏れる）。
 - RBAC は `viewer` / `operator` / `admin` × `view` / `execute` / `stop` の許可表 `src/domain/rbac.ts` が唯一の真実の源（不明なら拒否）。
-- Prisma クライアントは `src/generated/prisma` に出力され、型/enum は `src/domain/types.ts` からのみ import する（ESLint で強制）。結線は `src/lib/prisma-client.ts` の `createPrismaClient()` に集約。生成物（`src/generated/`）はコミットしない。
-- 金額はマイクロ USD の整数（`BigInt`）で持ち、JSON では文字列で運ぶ。API キーは SHA-256 ハッシュのみ保存し、平文は発行応答でしか返さない。
+- Prisma クライアントは `src/generated/prisma` に出力され、型/enum は `src/domain/types.ts` 経由で import する（`@/generated/prisma` の直接 import は ESLint が禁止。例外は結線箇所の `src/lib/prisma.ts` / `src/lib/prisma-client.ts` / `src/domain/types.ts`）。結線は `src/lib/prisma-client.ts` の `createPrismaClient()` に集約。生成物（`src/generated/`）はコミットしない。
+- 金額はマイクロ USD の整数（`BigInt`）で持ち、JSON では文字列で運ぶ。API キーは SHA-256 ハッシュ（`keyHash`）と先頭数文字（`prefix`）だけを保存し、平文は発行応答でしか返さない。
