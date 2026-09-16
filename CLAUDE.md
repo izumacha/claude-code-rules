@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 >
 > 集約元リポジトリ: `profile-portfolio` / `my-task-manager` / `my-first-ai-app` /
 > `helpdesk-hub` / `incident-insight` / `AI-Docker-Environment` /
-> `batch-scheduler` / `Expense-Management-Rest-API`
+> `batch-scheduler` / `Expense-Management-Rest-API` / `agent-ops`
 
 ---
 
@@ -280,3 +280,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 層構成: `controller/` → `service/` → `repository/`（Spring Data JPA）→ `domain/`（JPA エンティティ）。`dto/request/` と `dto/response/` を分離し内部エンティティを API 契約から切り離す。`GlobalExceptionHandler` がカスタム例外を HTTP ステータスへマップ。
 - 横断的関心事は `web/`（エラー応答の共通整形・ページング入力の無害化・リクエスト本文サイズ上限）・`security/`（IP ベースのレート制限フィルタ）・`validation/`（コードポイント単位の文字数検証・カテゴリ名の NFC 正規化）に分ける。
 - CI は `.github/workflows/ci.yml` の `build-test` ジョブ 1 本で `./mvnw -B verify`（Temurin JDK 21）を実行する。`repository/` 配下のテストは Testcontainers で PostgreSQL を起動するため Docker デーモンが必要。
+
+### I. agent-ops（Next.js 16 / Prisma 7, Agent Ops SaaS）
+
+- 正本は `docs/spec.md`（ユースケース・ER 図・API 一覧）と `docs/roadmap.md`（8 Step のロードマップと受け入れ基準）。実装と衝突したら先に文書を改訂してから実装を変える。設計判断は `docs/adr/` に ADR として残す。
+- **各 Step の受け入れ基準は `npm run gate:stepN` として自動化し、`main` でゲートが緑になってから次 Step のブランチを切る。** 基準を緩める変更は `docs/roadmap.md` と該当 ADR を同じ PR で更新する（テスト側だけを書き換えない）。Step の順序（0→1→…→7）を入れ替えず、後 Step の機能を前 Step に混ぜない。
+- REST API は `openapi/openapi.yaml`（OpenAPI 3.1）が契約の正本。`npm run gen` が `src/generated/openapi.d.ts` に型を生成し、`src/lib/api-types.ts` がアプリ側の名前で再公開する。新しいエンドポイントは「定義 → `gen` → 実装 → API テスト」の順で作る。
+- マルチテナントは行スコープ（全テーブルに `tenantId`）。Server Action / Route Handler は冒頭で `tenantId` を `where` に必ず差し込み、他テナントの資源は 404 で隠す。
+- RBAC は `viewer` / `operator` / `admin` × `view` / `execute` / `stop` の許可表 `src/domain/rbac.ts` が唯一の真実の源（不明なら拒否）。
+- Prisma クライアントは `src/generated/prisma` に出力され、型/enum は `src/domain/types.ts` からのみ import する（ESLint で強制）。結線は `src/lib/prisma-client.ts` の `createPrismaClient()` に集約。生成物（`src/generated/`）はコミットしない。
+- 金額はマイクロ USD の整数（`BigInt`）で持ち、JSON では文字列で運ぶ。API キーは SHA-256 ハッシュのみ保存し、平文は発行応答でしか返さない。

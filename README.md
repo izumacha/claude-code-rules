@@ -64,6 +64,7 @@ The master is consolidated from the `CLAUDE.md` files of:
 | `AI-Docker-Environment` | Docker サンドボックス（bash, Linux）|
 | `batch-scheduler` | Java 21 / Maven（バッチ実行マネージャ）|
 | `Expense-Management-Rest-API` | Java 21 / Spring Boot（REST API）|
+| `agent-ops` | Next.js 16 / Prisma 7（Agent Ops SaaS）|
 
 ※ `unmei-wo-hiraku` は private のため未収録。
 `unmei-wo-hiraku` is private and not included.
